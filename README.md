@@ -1,6 +1,6 @@
 # nkey-firmware
 
-Firmware for **nkey**, a custom hardware authenticator and password/key store built on **Waveshare RP2350-Zero-CM** (RP2350, 2 MB flash, 520 KB RAM).
+Open-source USB security key and credential store firmware for **RP2350** development boards (tested on Waveshare RP2350-Zero), featuring physical button confirmation.
 
 ## Origin & Non-Standard Authorization Behavior
 
