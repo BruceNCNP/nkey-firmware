@@ -29,6 +29,7 @@ Licensed under the **GNU Affero General Public License v3.0** (`AGPL-3.0`). See 
 | `src/fido/` | FIDO / authenticator firmware application sources |
 | `pico-keys-sdk/` | Vendored USB, storage, crypto, and board support SDK |
 | `cmake/` | CMake helpers for build patch and firmware naming |
+| `scripts/` | USB PC/SC debug helpers (`mgr.*`, `conf.py`); see [scripts/README.md](scripts/README.md) |
 | `tests/` | Firmware tests |
 | `workflows/` | CI workflow snippets |
 | `build_pico_fido.sh` | Release build helper script |
@@ -46,4 +47,59 @@ On first configure, CMake/SDK pulls dependencies such as Mbed TLS and TinyCBOR i
 export PICO_SDK_PATH="$HOME/pico-sdk"
 cmake -G Ninja -S . -B build -DPICO_BOARD=pico2 -DENABLE_EDDSA=ON
 ninja -C build
+```
+
+## USB Debug Scripts
+
+`scripts/` contains Python helpers that talk to a running board over USB CCID
+(PC/SC). They need no third-party packages: Windows uses `winscard.dll`, Linux
+uses `libpcsclite.so.1`. More detail is in [scripts/README.md](scripts/README.md).
+
+Plug in the board so the host sees the smart-card reader, then run the commands
+from this repository root.
+
+### Credential management
+
+| Script | Role |
+| --- | --- |
+| `scripts/mgr.list.py` | List index rows, or `ssh` / `passwd` / `fido` crypt stores |
+| `scripts/mgr.add.ssh.py` | Add one resident OpenSSH ed25519-sk credential |
+| `scripts/mgr.add.passwd.py` | Add one password slot |
+| `scripts/mgr.del.py` | Delete one SSH credential or password slot by id |
+
+```sh
+python scripts/mgr.list.py
+python scripts/mgr.list.py ssh
+python scripts/mgr.list.py passwd
+python scripts/mgr.add.ssh.py root@192.168.1.1 mybox
+python scripts/mgr.add.passwd.py 'secret' github work
+python scripts/mgr.del.py 1122334455667788
+```
+
+Add and delete wait for the physical button (blue LED). List commands do not.
+
+### Board configuration (PHY)
+
+`scripts/conf.py` reads and writes the rescue PHY record (`EF_PHY`): LED GPIO,
+brightness, color order, USB VID/PID, and related options. A write replaces the
+whole record, so `set` reads first, merges the requested tags, then writes.
+Press the button when prompted.
+
+```sh
+python scripts/conf.py show
+python scripts/conf.py set --led-gpio 16 --brightness 128 --led-order grb
+python scripts/conf.py set --vidpid 2E8A:10FE --reboot
+python scripts/conf.py clear-vidpid --reboot
+```
+
+### Offline self-tests
+
+These checks do not need a board:
+
+```sh
+python scripts/mgr.list.py --self-test
+python scripts/mgr.add.ssh.py --self-test
+python scripts/mgr.add.passwd.py --self-test
+python scripts/mgr.del.py --self-test
+python scripts/conf.py --self-test
 ```
