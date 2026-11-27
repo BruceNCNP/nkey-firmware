@@ -1,6 +1,9 @@
 # nkey-firmware
 
-Open-source USB security key and credential store firmware for **RP2350** development boards (tested on Waveshare RP2350-Zero), featuring physical button confirmation.
+Open-source USB hardware security key and local credential store firmware designed for **RP2350** microcontrollers, featuring physical button confirmation for password entry and SSH authorization.
+
+* **Project Website & Demo:** [https://brucencnp.com/nkey/](https://brucencnp.com/nkey/)
+* **Project Status:** Early prototype / pre-release preview. Firmware and companion host applications are under active development and not yet generally released.
 
 ## Origin & Non-Standard Authorization Behavior
 
@@ -10,12 +13,12 @@ This repository is adapted/forked from [pico-fido](https://github.com/polhenarej
 
 * **Button-only authorization:** All user presence and authorization checks in this firmware are replaced by physical button confirmation rather than standard FIDO PIN/biometric/protocol-mandated user verification flows.
 * **Non-standard FIDO behavior:** Because authorization relies on physical button presses instead of strict FIDO/CTAP specification flows, behavior may deviate from standard FIDO authenticators and strict compliance expectations.
-* **Custom workflows:** Pair with the `nkey` host tooling and custom commands/APDU/storage layout as implemented in this fork.
+* **Custom workflows:** Designed to pair with the `nkey` host tooling and custom commands/APDU/storage layout implemented in this fork.
 
 ## Hardware
 
-* **Primary target hardware:** Waveshare **RP2350-Zero-CM** (`PICO_BOARD=pico2`, RP2350 microcontroller, 2 MB flash, 520 KB RAM).
-* **Board wiring:** Button and LED pin/wiring behavior follows the RP2350-Zero-CM setup used in this firmware.
+* **Target platform:** Raspberry Pi **RP2350** (`PICO_BOARD=pico2`, 2 MB flash, 520 KB RAM).
+* **Reference / validation board:** Currently developed and verified on **Waveshare RP2350-Zero-CM**, with default button and RGB LED GPIO mappings following that hardware layout.
 * **Other RP2350 / RP2040 / display variants:** Additional board configurations or display/touch variants (such as Waveshare RP2350 touch-LCD boards or RP2040 targets) depend on board/build configuration and are not all guaranteed identical to the default `pico2` build.
 
 ## License
@@ -26,14 +29,12 @@ Licensed under the **GNU Affero General Public License v3.0** (`AGPL-3.0`). See 
 
 | Path | Role |
 | --- | --- |
-| `src/fido/` | FIDO / authenticator firmware application sources |
+| `src/fido/` | FIDO / authenticator and credential store firmware sources |
 | `pico-keys-sdk/` | Vendored USB, storage, crypto, and board support SDK |
 | `cmake/` | CMake helpers for build patch and firmware naming |
 | `scripts/` | USB PC/SC debug helpers (`mgr.*`, `conf.py`); see [scripts/README.md](scripts/README.md) |
 | `tests/` | Firmware tests |
 | `workflows/` | CI workflow snippets |
-| `build_pico_fido.sh` | Release build helper script |
-| `pico-fido-patch-vidpid.sh` | USB VID/PID patch helper script |
 | `CMakeLists.txt` | Top-level CMake build configuration |
 | `pico_sdk_import.cmake` | Pico SDK CMake integration helper |
 
@@ -51,12 +52,9 @@ ninja -C build
 
 ## USB Debug Scripts
 
-`scripts/` contains Python helpers that talk to a running board over USB CCID
-(PC/SC). They need no third-party packages: Windows uses `winscard.dll`, Linux
-uses `libpcsclite.so.1`. More detail is in [scripts/README.md](scripts/README.md).
+`scripts/` contains Python helpers that talk to a running board over USB CCID (PC/SC). They need no third-party packages: Windows uses `winscard.dll`, Linux uses `libpcsclite.so.1`. More detail is in [scripts/README.md](scripts/README.md).
 
-Plug in the board so the host sees the smart-card reader, then run the commands
-from this repository root.
+Plug in the board so the host sees the smart-card reader, then run the commands from this repository root.
 
 ### Credential management
 
@@ -80,10 +78,7 @@ Add and delete wait for the physical button (blue LED). List commands do not.
 
 ### Board configuration (PHY)
 
-`scripts/conf.py` reads and writes the rescue PHY record (`EF_PHY`): LED GPIO,
-brightness, color order, USB VID/PID, and related options. A write replaces the
-whole record, so `set` reads first, merges the requested tags, then writes.
-Press the button when prompted.
+`scripts/conf.py` reads and writes the rescue PHY record (`EF_PHY`): LED GPIO, brightness, color order, USB VID/PID, and related options. A write replaces the whole record, so `set` reads first, merges the requested tags, then writes. Press the button when prompted.
 
 ```sh
 python scripts/conf.py show
